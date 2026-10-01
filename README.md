@@ -1,15 +1,20 @@
 # High-Performance Limit-Order-Book
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://high-performance-limit-order-book.vercel.app/)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsrinathdoggala-tech%2FHigh-Performance-Limit-Order-Book)
 
-This Limit Order Book (LOB) is a high-performance, configurable matching engine implementation in modern C++20 accompanied by a real-time web visualizer and benchmarking dashboard ready for instant deployment on Vercel.
+> **Live Interactive Web Visualizer**: [https://high-performance-limit-order-book.vercel.app/](https://high-performance-limit-order-book.vercel.app/)
+
+This Limit Order Book (LOB) is a high-performance, configurable matching engine implementation in modern C++20 accompanied by a real-time web visualizer and benchmarking dashboard deployed live on Vercel.
 
 It is capable of executing over **2,250,000 orders per second** and performing over **750,000 mixed operations (adds, cancels, modifies) per second**. The LOB's primary goal is to provide a robust core data structure that is concurrency-safe for electronic trading systems, HFT, and quantitative research with a focus on **efficiency, accuracy, and maintainability**.
 
 ![Order Book Hero Preview](assets/preview.jpg)
 
-## 🌐 Live Web Visualizer & Dashboard (Vercel)
-The repository includes a modern, zero-dependency real-time web dashboard designed for instant deployment on Vercel:
+## 🌐 Live Web Visualizer & Dashboard
+Experience the real-time matching engine directly in your browser:
+👉 **[Open Live Dashboard](https://high-performance-limit-order-book.vercel.app/)**
+
 - **Interactive L2 Order Book**: Live Bid & Ask depth ladder with dynamic depth percentage bars and spread indicators.
 - **Liquidity Depth Chart**: Anti-aliased canvas-rendered cumulative Bid vs. Ask depth curve with live mid-market tracking.
 - **Markov-Pareto Stream Simulation**: In-browser real-time order generator simulating institutional flow, fat-tailed sizes (Pareto), and Poisson price arrival.
