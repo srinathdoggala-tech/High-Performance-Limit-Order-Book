@@ -1,4 +1,4 @@
-# Limit-Order-Book
+# High-Performance-Limit-Order-Book
 This Limit Order Book (LOB) is a high-performance, configurable implementation in modern C++. It is able to execute over **2,250,000 non-concurrent  orders per second** and perform over **750,000 non-concurrent  general operations per second**. The LOB's primary goal is to provide a robust core data structure that is also concurrency-safe for electronic trading systems, HFT, and quantitative research with a focus on **efficiency, accuracy, and maintainability**.
 
 Benchmarking the performance of the Order Book was challenging, as realistic results require realistic data. For this, I implemented a market simulation using a **Markov chain and Pareto process** to generate synthetic but market-like order flow, which enables automated and realistic benchmarking.
