@@ -1,9 +1,29 @@
-# High Performance-Limit-Order-Book
-This Limit Order Book (LOB) is a high-performance, configurable implementation in modern C++. It is able to execute over **2,250,000 non-concurrent  orders per second** and perform over **750,000 non-concurrent  general operations per second**. The LOB's primary goal is to provide a robust core data structure that is also concurrency-safe for electronic trading systems, HFT, and quantitative research with a focus on **efficiency, accuracy, and maintainability**.
+# High-Performance Limit-Order-Book
 
-Benchmarking the performance of the Order Book was challenging, as realistic results require realistic data. For this, I implemented a market simulation using a **Markov chain and Pareto process** to generate synthetic but market-like order flow, which enables automated and realistic benchmarking.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsrinathdoggala-tech%2FHigh-Performance-Limit-Order-Book)
 
-## Quick Start
+This Limit Order Book (LOB) is a high-performance, configurable matching engine implementation in modern C++20 accompanied by a real-time web visualizer and benchmarking dashboard ready for instant deployment on Vercel.
+
+It is capable of executing over **2,250,000 orders per second** and performing over **750,000 mixed operations (adds, cancels, modifies) per second**. The LOB's primary goal is to provide a robust core data structure that is concurrency-safe for electronic trading systems, HFT, and quantitative research with a focus on **efficiency, accuracy, and maintainability**.
+
+![Order Book Hero Preview](assets/preview.jpg)
+
+## 🌐 Live Web Visualizer & Dashboard (Vercel)
+The repository includes a modern, zero-dependency real-time web dashboard designed for instant deployment on Vercel:
+- **Interactive L2 Order Book**: Live Bid & Ask depth ladder with dynamic depth percentage bars and spread indicators.
+- **Liquidity Depth Chart**: Anti-aliased canvas-rendered cumulative Bid vs. Ask depth curve with live mid-market tracking.
+- **Markov-Pareto Stream Simulation**: In-browser real-time order generator simulating institutional flow, fat-tailed sizes (Pareto), and Poisson price arrival.
+- **Execution Tape**: Real-time Time & Sales stream displaying fills, taker sides, and nanosecond latency gauges.
+- **In-Browser Benchmark Suite**: Batch stress tests (10k, 50k, 200k ops) measuring client-side matching throughput.
+
+### Deploying to Vercel
+1. Import this repository into [Vercel](https://vercel.com).
+2. Framework Preset: **Other** (Root Directory: `./`).
+3. Deploy! Zero build step is required—the static web app is automatically served via Vercel's global Edge network.
+
+---
+
+## Quick Start (C++ Engine)
 Requires C++20
 ```sh
 mkdir build && cd build
@@ -88,20 +108,27 @@ Limit-Order-Book/
 │   ├── Engine.cpp
 │   ├── Engine.h
 │   └── EngineCommand.h
-├── Order Book/            * Core order book implementation
-│   ├── Order.cpp
-│   ├── Order.h
-│   ├── OrderBook.cpp
-│   └── OrderBook.h
-├── Order Generator/       * Market simulation & order flow generation
-│   ├── MarkovParetoOrderGenerator.cpp
-│   └── MarkovParetoOrderGenerator.h
+├── Order_Book/            * Core order book implementation
+│   ├── Order.cpp
+│   ├── Order.h
+│   ├── OrderBook.cpp
+│   └── OrderBook.h
+├── Order_Generator/       * Market simulation & order flow generation
+│   ├── MarkovParetoOrderGenerator.cpp
+│   └── MarkovParetoOrderGenerator.h
 ├── Testing/               * Unit tests and benchmarking tools
-│   ├── OrderBookTests.cpp
-│   └── OrderBookTests.h
-├── CMakeLists.txt
+│   ├── OrderBookTests.cpp
+│   └── OrderBookTests.h
+├── assets/                * Visualizer assets & preview cards
+│   └── preview.jpg
+├── index.html             * Real-time web visualizer & LOB dashboard
+├── styles.css             * Cyberpunk/fintech dark design system
+├── app.js                 * In-browser matching engine & depth chart logic
+├── vercel.json            * Vercel edge deployment configuration
+├── package.json           * Project metadata & deployment config
+├── CMakeLists.txt         * C++ build configuration
 ├── .gitignore
-├── README.md
+└── README.md
 ```
 
 

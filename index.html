@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>High-Performance Limit Order Book | HFT Matching Engine</title>
+  <meta name="description" content="Real-time interactive visualizer and benchmark dashboard for a High-Performance C++ Limit Order Book matching engine featuring lock-free queues, price-time priority, and Markov-Pareto order streams.">
+  <meta name="theme-color" content="#090d16">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="High-Performance Limit Order Book Dashboard">
+  <meta property="og:description" content="Ultra-low latency C++ matching engine visualizer with live L2 order book, depth chart, and Markov-Pareto simulation.">
+  <meta property="og:image" content="assets/preview.jpg">
+  <meta property="og:type" content="website">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z'/></svg>">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation & Brand Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <div class="brand-title-wrap">
+            <h1 class="brand-title">HFT Limit Order Book</h1>
+            <span class="badge badge-tech">C++20 Engine</span>
+            <span class="badge badge-status" id="engineStatusBadge">
+              <span class="status-dot"></span> RUNNING
+            </span>
+          </div>
+          <p class="brand-subtitle">Lock-Free SPSC Ring Buffer • Price-Time Priority FIFO • Sub-Microsecond Matching</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="openArchModalBtn" class="btn btn-secondary btn-sm" title="View C++ Engine Architecture">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+          Architecture
+        </button>
+        <button id="runBenchmarkHeaderBtn" class="btn btn-primary-gradient btn-sm" title="Run 100,000 Operations Benchmark">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Run Benchmark
+        </button>
+        <a href="https://github.com/srinathdoggala-tech/High-Performance-Limit-Order-Book" target="_blank" rel="noopener noreferrer" class="btn btn-icon" title="View Source on GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- Real-Time Telemetry Bar -->
+    <section class="telemetry-bar" aria-label="Engine Performance Metrics">
+      <div class="telemetry-metric">
+        <span class="metric-label">THROUGHPUT</span>
+        <div class="metric-value-wrap">
+          <span class="metric-value glow-cyan" id="metricThroughput">0</span>
+          <span class="metric-unit">ops/sec</span>
+        </div>
+      </div>
+      <div class="telemetry-metric">
+        <span class="metric-label">AVG LATENCY</span>
+        <div class="metric-value-wrap">
+          <span class="metric-value glow-green" id="metricLatency">42.8</span>
+          <span class="metric-unit">ns</span>
+        </div>
+      </div>
+      <div class="telemetry-metric">
+        <span class="metric-label">TOTAL ORDERS</span>
+        <div class="metric-value-wrap">
+          <span class="metric-value" id="metricTotalOrders">0</span>
+        </div>
+      </div>
+      <div class="telemetry-metric">
+        <span class="metric-label">TRADES EXECUTED</span>
+        <div class="metric-value-wrap">
+          <span class="metric-value glow-amber" id="metricTotalTrades">0</span>
+          <span class="metric-unit" id="metricTradeVolume">0 qty</span>
+        </div>
+      </div>
+      <div class="telemetry-metric">
+        <span class="metric-label">BEST BID / ASK</span>
+        <div class="metric-value-wrap">
+          <span class="metric-value buy-color" id="metricBestBid">-</span>
+          <span class="metric-divider">/</span>
+          <span class="metric-value sell-color" id="metricBestAsk">-</span>
+        </div>
+      </div>
+      <div class="telemetry-metric">
+        <span class="metric-label">SPREAD</span>
+        <div class="metric-value-wrap">
+          <span class="metric-value" id="metricSpread">-</span>
+          <span class="metric-unit" id="metricSpreadTicks">0 ticks</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Benchmark Alert Banner (Visible when benchmark is run) -->
+    <div id="benchmarkBanner" class="benchmark-banner hidden">
+      <div class="banner-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span id="benchmarkText">Benchmarking in progress...</span>
+      </div>
+      <button class="banner-close" id="closeBenchmarkBanner" aria-label="Close banner">&times;</button>
+    </div>
+
+    <!-- Main 3-Column Trading Terminal Workspace -->
+    <main class="terminal-workspace">
+      <!-- Left Column: Order Terminal & Engine Controls -->
+      <aside class="panel terminal-control-panel">
+        <div class="panel-header">
+          <div class="tabs-nav" role="tablist">
+            <button class="tab-btn active" id="tabStreamBtn" role="tab" aria-selected="true" aria-controls="tabStreamContent">Markov Generator</button>
+            <button class="tab-btn" id="tabManualBtn" role="tab" aria-selected="false" aria-controls="tabManualContent">Manual Order</button>
+            <button class="tab-btn" id="tabBatchBtn" role="tab" aria-selected="false" aria-controls="tabBatchContent">Stress Test</button>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <!-- Tab 1: Markov-Pareto Generator -->
+          <div class="tab-pane active" id="tabStreamContent" role="tabpanel">
+            <div class="control-box">
+              <div class="control-header">
+                <span class="box-title">Order Flow Stream</span>
+                <span class="badge" id="streamStatusBadge">PAUSED</span>
+              </div>
+              <p class="box-desc">Simulates the C++ <code>MarkovParetoOrderGenerator</code> with Pareto heavy-tail sizing and Poisson price arrival.</p>
+              
+              <div class="btn-group-full">
+                <button id="startStreamBtn" class="btn btn-success btn-lg">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Start Stream
+                </button>
+                <button id="pauseStreamBtn" class="btn btn-secondary btn-lg" disabled>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  Pause
+                </button>
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-label-row">
+                  <span>Stream Speed</span>
+                  <span class="slider-val" id="streamSpeedVal">150 orders/sec</span>
+                </div>
+                <input type="range" id="streamSpeedSlider" min="10" max="2000" step="10" value="150" class="custom-slider">
+                <div class="speed-presets">
+                  <button class="pill-btn active" data-speed="50">50/s</button>
+                  <button class="pill-btn" data-speed="150">150/s</button>
+                  <button class="pill-btn" data-speed="500">500/s</button>
+                  <button class="pill-btn" data-speed="1500">1.5k/s</button>
+                </div>
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-label-row">
+                  <span>Pareto Alpha (Fat-Tail Size)</span>
+                  <span class="slider-val" id="streamAlphaVal">1.25</span>
+                </div>
+                <input type="range" id="streamAlphaSlider" min="0.8" max="2.5" step="0.05" value="1.25" class="custom-slider">
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-label-row">
+                  <span>Cancellation Probability</span>
+                  <span class="slider-val" id="streamCancelVal">25%</span>
+                </div>
+                <input type="range" id="streamCancelSlider" min="0" max="60" step="5" value="25" class="custom-slider">
+              </div>
+
+              <button id="resetBookBtn" class="btn btn-danger-ghost btn-sm mt-3" title="Clear all orders and reset book state">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                Reset Order Book
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab 2: Manual Order Entry -->
+          <div class="tab-pane" id="tabManualContent" role="tabpanel">
+            <form id="manualOrderForm" class="order-form">
+              <div class="side-selector">
+                <input type="radio" id="sideBuy" name="orderSide" value="BUY" checked>
+                <label for="sideBuy" class="side-btn buy-side">BUY (BID)</label>
+
+                <input type="radio" id="sideSell" name="orderSide" value="SELL">
+                <label for="sideSell" class="side-btn sell-side">SELL (ASK)</label>
+              </div>
+
+              <div class="type-selector mt-2">
+                <input type="radio" id="typeLimit" name="orderType" value="LIMIT" checked>
+                <label for="typeLimit" class="type-btn">LIMIT ORDER</label>
+
+                <input type="radio" id="typeMarket" name="orderType" value="MARKET">
+                <label for="typeMarket" class="type-btn">MARKET ORDER</label>
+              </div>
+
+              <div class="form-group mt-3" id="priceInputGroup">
+                <label for="orderPrice">Price ($)</label>
+                <div class="input-stepper">
+                  <button type="button" class="step-btn" id="priceDecBtn">-0.50</button>
+                  <input type="number" id="orderPrice" step="0.01" min="1" value="100.00" class="custom-input">
+                  <button type="button" class="step-btn" id="priceIncBtn">+0.50</button>
+                </div>
+              </div>
+
+              <div class="form-group mt-2">
+                <label for="orderQuantity">Quantity (Contracts)</label>
+                <div class="input-stepper">
+                  <button type="button" class="step-btn" id="qtyDecBtn">-10</button>
+                  <input type="number" id="orderQuantity" step="1" min="1" value="25" class="custom-input">
+                  <button type="button" class="step-btn" id="qtyIncBtn">+10</button>
+                </div>
+              </div>
+
+              <div class="order-presets mt-2">
+                <button type="button" class="preset-pill" id="presetAtBid">At Best Bid</button>
+                <button type="button" class="preset-pill" id="presetMid">Mid-Market</button>
+                <button type="button" class="preset-pill" id="presetAtAsk">At Best Ask</button>
+              </div>
+
+              <button type="submit" id="submitOrderBtn" class="btn btn-buy btn-lg mt-3">
+                Submit Buy Limit Order
+              </button>
+            </form>
+
+            <div class="manual-mgmt-box mt-3">
+              <span class="box-title">Direct Order Commands</span>
+              <div class="btn-group-row mt-2">
+                <button id="cancelRandomBtn" class="btn btn-secondary btn-sm" title="Cancel a random active order (tests O(1) hash map cancel)">Cancel Active Order</button>
+                <button id="modifyRandomBtn" class="btn btn-secondary btn-sm" title="Modify order price & size">Modify Order</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Stress Testing & Benchmarks -->
+          <div class="tab-pane" id="tabBatchContent" role="tabpanel">
+            <div class="control-box">
+              <span class="box-title">Matching Engine Stress Test</span>
+              <p class="box-desc">Executes batch operations through the command queue to evaluate throughput, matching efficiency, and cache utilization.</p>
+
+              <div class="benchmark-options mt-2">
+                <button class="btn btn-secondary btn-full benchmark-trigger" data-count="10000">
+                  <span>⚡ Batch 10,000 Operations</span>
+                  <span class="subtext">Adds, Cancels, Modifies</span>
+                </button>
+                <button class="btn btn-secondary btn-full benchmark-trigger mt-2" data-count="50000">
+                  <span>🔥 Batch 50,000 Operations</span>
+                  <span class="subtext">High memory pressure</span>
+                </button>
+                <button class="btn btn-primary-gradient btn-full benchmark-trigger mt-2" data-count="200000">
+                  <span>🚀 Batch 200,000 Operations</span>
+                  <span class="subtext">Simulate HFT burst peak</span>
+                </button>
+              </div>
+
+              <div class="cpp-benchmark-stats mt-3">
+                <div class="box-title">C++ Engine Reference Benchmark</div>
+                <div class="ref-stat-row">
+                  <span>Operations:</span> <strong>5,000,000</strong>
+                </div>
+                <div class="ref-stat-row">
+                  <span>Execution Time:</span> <strong>0.912 s</strong>
+                </div>
+                <div class="ref-stat-row">
+                  <span>Throughput:</span> <strong class="glow-cyan">5.48M ops/sec</strong>
+                </div>
+                <div class="ref-stat-row">
+                  <span>Tick-to-Trade Latency:</span> <strong class="glow-green">&lt; 182 ns</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lock-Free Ring Buffer Visualizer -->
+        <div class="queue-monitor">
+          <div class="queue-header">
+            <span class="monitor-title">SPSC Ring Buffer Queue</span>
+            <span class="queue-capacity">Capacity: 65,536</span>
+          </div>
+          <div class="queue-bar-wrap">
+            <div class="queue-fill" id="queueFillBar" style="width: 4%"></div>
+          </div>
+          <div class="queue-meta">
+            <span>Pending: <strong id="queuePendingCount">0</strong></span>
+            <span>Batch Threshold: <strong>30,000</strong></span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center Column: L2 Order Book & Depth Chart -->
+      <section class="panel terminal-center-panel">
+        <div class="panel-header">
+          <div class="header-tab-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+            <span>Live L2 Order Book & Liquidity Depth</span>
+          </div>
+          <div class="depth-granularity">
+            <span class="granularity-label">Tick Size:</span>
+            <span class="granularity-val">$0.01</span>
+          </div>
+        </div>
+
+        <!-- Real-Time Liquidity Depth Chart Canvas -->
+        <div class="depth-chart-container">
+          <div class="depth-chart-header">
+            <span class="chart-legend buy"><span class="legend-dot"></span> Bids (Cumulative)</span>
+            <span class="chart-legend mid" id="depthMidPrice">Mid: $100.00</span>
+            <span class="chart-legend sell"><span class="legend-dot"></span> Asks (Cumulative)</span>
+          </div>
+          <canvas id="depthCanvas" class="depth-canvas" width="600" height="150"></canvas>
+        </div>
+
+        <!-- L2 Order Book Ladder Table -->
+        <div class="book-ladder-wrap">
+          <div class="ladder-columns-header">
+            <span class="col-price">PRICE ($)</span>
+            <span class="col-size">SIZE</span>
+            <span class="col-total">TOTAL</span>
+            <span class="col-depth">DEPTH</span>
+          </div>
+
+          <!-- Asks (Sells) - Ascending from best ask up -->
+          <div class="ladder-section asks-section" id="asksContainer" aria-label="Asks Ladder">
+            <!-- Populated dynamically via JS -->
+            <div class="empty-state">Waiting for engine orders...</div>
+          </div>
+
+          <!-- Spread Indicator Row -->
+          <div class="spread-indicator-row" id="spreadRow">
+            <div class="spread-left">
+              <span class="spread-tag">SPREAD</span>
+              <span class="spread-amount" id="ladderSpreadAmount">$0.02</span>
+            </div>
+            <div class="mid-price-center">
+              <span class="mid-label">MID</span>
+              <span class="mid-val" id="ladderMidPrice">$100.00</span>
+            </div>
+            <div class="spread-right">
+              <span class="spread-ticks" id="ladderSpreadTicks">2 ticks</span>
+            </div>
+          </div>
+
+          <!-- Bids (Buys) - Descending from best bid down -->
+          <div class="ladder-section bids-section" id="bidsContainer" aria-label="Bids Ladder">
+            <!-- Populated dynamically via JS -->
+            <div class="empty-state">Waiting for engine orders...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Time & Sales Tape + Active Orders -->
+      <aside class="panel terminal-right-panel">
+        <div class="panel-header">
+          <div class="header-tab-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>Execution Tape (Time & Sales)</span>
+          </div>
+          <span class="feed-live-badge"><span class="pulse-dot"></span> FEED</span>
+        </div>
+
+        <div class="panel-body trades-body">
+          <div class="trades-columns-header">
+            <span class="th-time">TIME</span>
+            <span class="th-price">PRICE</span>
+            <span class="th-size">QTY</span>
+            <span class="th-side">SIDE</span>
+          </div>
+          <div class="trades-stream" id="tradesStream" aria-live="polite">
+            <!-- Dynamic Trades Stream -->
+            <div class="empty-state">No trades executed yet. Start stream or submit crossing orders!</div>
+          </div>
+        </div>
+
+        <!-- Active User Inventory / Orders Snapshot -->
+        <div class="active-orders-panel">
+          <div class="panel-sub-header">
+            <span>Open Book Orders (<span id="activeOrderCount">0</span>)</span>
+            <span class="subtext">Click order to cancel</span>
+          </div>
+          <div class="active-orders-list" id="activeOrdersList">
+            <!-- Dynamically populated -->
+            <div class="empty-hint">No active orders</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Architecture & C++ Internals Modal -->
+    <div class="modal-overlay hidden" id="archModal" role="dialog" aria-modal="true" aria-labelledby="archModalTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h2 id="archModalTitle">High-Performance Limit Order Book Architecture</h2>
+            <span class="badge badge-tech">C++20 &amp; Concurrency</span>
+          </div>
+          <button class="modal-close-btn" id="closeArchModalBtn" aria-label="Close architecture modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="arch-grid">
+            <div class="arch-card">
+              <div class="arch-card-header">
+                <span class="arch-num">01</span>
+                <h3>Bounded Lock-Free Queue</h3>
+                <span class="card-file">Engine/BoundedQueue.h</span>
+              </div>
+              <p>Thread-safe Single Producer Single Consumer (SPSC) ring buffer with <code>std::atomic&lt;size_t&gt;</code> head and tail indices with power-of-two masking. Avoids heavy mutex locking on critical path.</p>
+            </div>
+
+            <div class="arch-card">
+              <div class="arch-card-header">
+                <span class="arch-num">02</span>
+                <h3>Matching Engine &amp; Worker</h3>
+                <span class="card-file">Engine/Engine.h</span>
+              </div>
+              <p>Dedicated processing worker executing on a pinned thread. Commands are dequeued and processed in batches up to <strong>30,000</strong> operations before triggering matching, maximizing L1/L2 cache locality.</p>
+            </div>
+
+            <div class="arch-card">
+              <div class="arch-card-header">
+                <span class="arch-num">03</span>
+                <h3>Price-Time Priority Order Book</h3>
+                <span class="card-file">Order_Book/OrderBook.h</span>
+              </div>
+              <p>Uses <code>std::map&lt;Price, PriceLevel&gt;</code> for ordered price levels and doubly-linked <code>std::list&lt;OrderPointer&gt;</code> for FIFO queues. An <code>unordered_map&lt;IdNumber, iterator&gt;</code> enables <strong>O(1)</strong> order cancellation and modification without scanning.</p>
+            </div>
+
+            <div class="arch-card">
+              <div class="arch-card-header">
+                <span class="arch-num">04</span>
+                <h3>Markov-Pareto Order Stream</h3>
+                <span class="card-file">Order_Generator/MarkovParetoOrderGenerator.h</span>
+              </div>
+              <p>Synthesizes institutional market flow using a continuous Markov process for mid-price drift combined with a Pareto heavy-tailed distribution for realistic volume clumping and flash spikes.</p>
+            </div>
+          </div>
+
+          <div class="arch-code-preview mt-3">
+            <div class="code-preview-header">
+              <span>Matching Logic Flow (FIFO Price-Time Priority)</span>
+              <span class="tag">C++ Core</span>
+            </div>
+            <pre><code>// OrderBook::matchOrders()
+while (!bids.empty() && !asks.empty()) {
+    auto bestBidIt = bids.begin();
+    auto bestAskIt = asks.begin();
+    
+    if (bestBidIt->first < bestAskIt->first) break; // No crossing spread
+
+    auto& buyOrder = bestBidIt->second->orders.front();
+    auto& sellOrder = bestAskIt->second->orders.front();
+
+    Quantity tradeQty = std::min(buyOrder->getRemainingQuantity(), sellOrder->getRemainingQuantity());
+    buyOrder->fill(tradeQty);
+    sellOrder->fill(tradeQty);
+
+    if (buyOrder->isFilled()) bestBidIt->second->orders.pop_front();
+    if (sellOrder->isFilled()) bestAskIt->second->orders.pop_front();
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <a href="https://github.com/srinathdoggala-tech/High-Performance-Limit-Order-Book" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+            View C++ Code on GitHub
+          </a>
+          <button class="btn btn-primary" id="closeArchModalBtn2">Close Spec</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bar -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>Limit Order Book Matching Engine</span>
+        <span class="divider">•</span>
+        <span>Built with C++20, CMake &amp; WebGL/Canvas UI</span>
+      </div>
+      <div class="footer-right">
+        <span>Ready for Vercel Serverless &amp; Edge Deployment</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
